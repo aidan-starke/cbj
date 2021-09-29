@@ -25,4 +25,3 @@ yarn-error.log*
 
 # migrations
 /src/config.js
-/src/contracts
