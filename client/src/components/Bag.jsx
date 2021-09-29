@@ -61,11 +61,7 @@ function Bag ({ account, contracts, web3, setBalance }) {
             chips: bag[3],
             owner: bag[4]
         }
-        try {
-            let token = await Bag.methods.tokenURI(bag.bagId).call()
-            console.log(token)
-
-        } catch (err) { console.log(err.message) }
+        // let token = await Bag.methods.tokenURI(bag.bagId).call()
         setBag(bag)
     }
 
