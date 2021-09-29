@@ -18,7 +18,7 @@ contract Bag is ERC721URIStorage {
         _bagIds.increment();
         uint256 newBagId = _bagIds.current();
 
-        _mint(contractAddress, newBagId);
+        _mint(msg.sender, newBagId);
         _setTokenURI(newBagId, _bagURI);
         setApprovalForAll(contractAddress, true);
 
