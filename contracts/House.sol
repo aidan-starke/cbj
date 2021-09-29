@@ -34,7 +34,6 @@ contract House is ReentrancyGuard {
         uint256 indexed itemId,
         address indexed bagContract,
         uint256 bagId,
-        uint256 indexed chips,
         address owner
     );
 
@@ -53,55 +52,52 @@ contract House is ReentrancyGuard {
         return _itemIds.current();
     }
 
-    modifier valueEqualToBagPriceAndChips(uint256 _chips) {
-        if (_chips == 0) {
-            require(
-                msg.value == bagPrice,
-                "Price must equal bag purchase price"
-            );
-            _;
-        } else {
-            require(
-                msg.value == bagPrice + _chips * chipPrice,
-                "Price must equal bag purchase price + value of chips"
-            );
-            _;
-        }
-    }
-
     modifier onlyOneBag() {
-        require(addressToBag[msg.sender].owner == address(0));
+        require(
+            addressToBag[msg.sender].owner == address(0),
+            "Only one bag per person"
+        );
         _;
     }
 
-    function createBag(
-        address _bagContract,
-        uint256 _bagId,
-        uint256 _chips
-    )
+    modifier onlyBagOwner() {
+        require(
+            addressToBag[msg.sender].owner == msg.sender,
+            "Only bag owner can access bag"
+        );
+        _;
+    }
+
+    function bagExists() external view returns (bool) {
+        return addressToBag[msg.sender].owner != address(0);
+    }
+
+    function getBag() external view onlyBagOwner returns (Bag memory bag) {
+        return addressToBag[msg.sender];
+    }
+
+    function createBag(address _bagContract, uint256 _bagId)
         public
         payable
         nonReentrant
-        valueEqualToBagPriceAndChips(_chips)
         onlyOneBag
     {
+        require(msg.value == bagPrice, "Price must equal bag purchase price");
         _itemIds.increment();
         uint256 itemId = _itemIds.current();
-
-        IERC721(_bagContract).transferFrom(address(this), msg.sender, _bagId);
 
         addressToBag[msg.sender] = Bag(
             itemId,
             _bagContract,
             _bagId,
-            _chips,
+            0,
             payable(msg.sender)
         );
 
-        emit BagCreated(itemId, _bagContract, _bagId, _chips, msg.sender);
+        emit BagCreated(itemId, _bagContract, _bagId, msg.sender);
     }
 
-    function getChipBalance() external view returns (uint256) {
+    function getChipBalance() external view onlyBagOwner returns (uint256) {
         return addressToBag[msg.sender].chips;
     }
 
@@ -111,7 +107,7 @@ contract House is ReentrancyGuard {
             "Price must equal value of chips"
         );
 
-        IERC20(cbjAddress).transferFrom(msg.sender, cbjAddress, msg.value);
+        IERC20(cbjAddress).transferFrom(msg.sender, address(this), msg.value);
         addressToBag[msg.sender].chips += _amount;
 
         emit ChipsBought(_amount, addressToBag[msg.sender].bagId, msg.sender);
@@ -126,7 +122,8 @@ contract House is ReentrancyGuard {
     }
 
     function cashIn(uint256 _amount) public nonReentrant enoughChips(_amount) {
-        IERC20(cbjAddress).transfer(msg.sender, (_amount * chipPrice));
+        uint256 value = _amount * chipPrice;
+        IERC20(cbjAddress).transfer(msg.sender, value);
         addressToBag[msg.sender].chips -= _amount;
 
         emit ChipsCashedIn(_amount, addressToBag[msg.sender].bagId, msg.sender);
