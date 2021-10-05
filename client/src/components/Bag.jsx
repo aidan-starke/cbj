@@ -12,7 +12,6 @@ function Bag ({ account, contracts, web3, setBalance }) {
     const [loading, setLoading] = useState(true)
     const [bag, setBag] = useState({})
     const [buyBag, setBuyBag] = useState(false)
-    const [url, setUrl] = useState('')
     const [chipAmount, setChipAmount] = useState(0)
 
     const { CBJ, House } = contracts
@@ -37,15 +36,21 @@ function Bag ({ account, contracts, web3, setBalance }) {
         getBag()
     }
 
-    async function getBag () {
-        let bag = await House.methods.getBag().call({ from: account })
-        bag = {
-            itemId: bag[0],
-            chips: bag[1],
-            owner: bag[2]
-        }
-        setBag(bag)
-    }
+    const getBag = () => House.methods.getBag().call({ from: account })
+        .then(bag => {
+            bag = {
+                itemId: bag[0],
+                chips: bag[1],
+                owner: bag[2]
+            }
+            setBag(bag)
+        })
+
+    const updateBag = () => CBJ.methods.balanceOf(account).call()
+        .then(balance => {
+            getBag()
+            setBalance(web3.utils.fromWei(balance.toString()))
+        })
 
     async function buyChips () {
         let chipPrice = await House.methods.getChipPrice().call()
@@ -55,17 +60,11 @@ function Bag ({ account, contracts, web3, setBalance }) {
         await CBJ.methods.approve(House._address, value).send({ from: account, gas: 1000000 })
         await House.methods.buyChips(chipAmount).send({ from: account, value, gas: 1000000 })
 
-        let balance = await CBJ.methods.balanceOf(account).call()
-        getBag()
-        setBalance(web3.utils.fromWei(balance.toString()))
+        updateBag()
     }
 
-    async function cashIn () {
-        await House.methods.cashIn(chipAmount).send({ from: account, gas: 1000000 })
-        let balance = await CBJ.methods.balanceOf(account).call()
-        getBag()
-        setBalance(web3.utils.fromWei(balance.toString()))
-    }
+    const cashIn = () => House.methods.cashIn(chipAmount).send({ from: account, gas: 1000000 })
+        .then(updateBag)
 
     if (loading) return <Title level={4}>Loading...</Title>
 
