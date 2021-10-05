@@ -60,6 +60,13 @@ function Bag ({ account, contracts, web3, setBalance }) {
         setBalance(web3.utils.fromWei(balance.toString()))
     }
 
+    async function cashIn () {
+        await House.methods.cashIn(chipAmount).send({ from: account, gas: 1000000 })
+        let balance = await CBJ.methods.balanceOf(account).call()
+        getBag()
+        setBalance(web3.utils.fromWei(balance.toString()))
+    }
+
     if (loading) return <Title level={4}>Loading...</Title>
 
     else return (
@@ -72,6 +79,8 @@ function Bag ({ account, contracts, web3, setBalance }) {
                     </Typography >
                     <label htmlFor='input' />
                     <Button onClick={buyChips}>Buy Chips</Button>
+                    <Input style={{ display: 'inline-block', maxWidth: '300px' }} placeholder='amount' type='text' onChange={e => setChipAmount(e.target.value)} />
+                    <Button onClick={cashIn}>Cash in Chips</Button>
                     <Input style={{ display: 'inline-block', maxWidth: '300px' }} placeholder='amount' type='text' onChange={e => setChipAmount(e.target.value)} />
                 </Card>
             }
