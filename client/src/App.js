@@ -6,7 +6,7 @@ import { connect } from 'react-redux'
 import { mapAccountToStore, mapContractsToStore, mapWeb3ToStore } from './actions'
 import { Route, Switch } from 'react-router'
 import { Link } from 'react-router-dom'
-import { Account, Bag, BlackJack, Prism, ThemeSwitch } from './components'
+import { Bag, BlackJack, Prism, ThemeSwitch } from './components'
 
 
 function App ({ dispatch }) {
@@ -61,7 +61,6 @@ function App ({ dispatch }) {
 
       <Menu mode='horizontal' >
         <Menu.Item key='home'><Link to='/' />Home</Menu.Item>
-        <Menu.Item key='account'><Link to='/account' />My Account</Menu.Item>
         <Menu.Item key='bag'><Link to='/bag' />My Bag</Menu.Item>
         <Menu.Item key='play'><Link to='/play' />Play BlackJack</Menu.Item>
       </Menu>
@@ -71,9 +70,6 @@ function App ({ dispatch }) {
           <Switch>
             <Route exact path='/'
               render={() => <Prism />} />
-
-            <Route path='/account'
-              render={() => <Account account={account} contracts={contracts} web3={web3} />} />
 
             <Route path='/bag'
               render={() => <Bag setBalance={setBalance} />} />
