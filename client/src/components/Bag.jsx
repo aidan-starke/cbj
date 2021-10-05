@@ -12,9 +12,10 @@ function Bag ({ account, contracts, web3, setBalance }) {
     const [loading, setLoading] = useState(true)
     const [bag, setBag] = useState({})
     const [buyBag, setBuyBag] = useState(false)
+    const [url, setUrl] = useState('')
     const [chipAmount, setChipAmount] = useState(0)
 
-    const { CBJ, House, Bag } = contracts
+    const { CBJ, House } = contracts
 
     async function init () {
         let bagExists = await House.methods.bagExists().call({ from: account })
@@ -26,28 +27,12 @@ function Bag ({ account, contracts, web3, setBalance }) {
 
     useEffect(() => {
         init()
-            .then(() => setLoading(false))
+            .then(setLoading)
     }, [])
 
-    function mintBag () {
-        const data = JSON.stringify({
-            type: 'CBJ Bag', owner: account
-        })
-        try {
-            client.add(data)
-                .then(async added => {
-                    const url = `https://ipfs.infura.io/ipfs/${added.path}`
-                    let bagId = await Bag.methods.mintBag(url).call({ from: account })
-                    createBag(bagId)
-                })
-        } catch (error) {
-            console.log('Error uploading file: ', error)
-        }
-    }
-
-    async function createBag (bagId) {
+    async function createBag () {
         let bagPrice = await House.methods.getBagPrice().call()
-        await House.methods.createBag(Bag._address, bagId).send({ from: account, value: bagPrice, gas: 1000000 })
+        await House.methods.createBag().send({ from: account, value: bagPrice, gas: 1000000 })
         setBuyBag(false)
         getBag()
     }
@@ -56,12 +41,9 @@ function Bag ({ account, contracts, web3, setBalance }) {
         let bag = await House.methods.getBag().call({ from: account })
         bag = {
             itemId: bag[0],
-            bagContract: bag[1],
-            bagId: bag[2],
-            chips: bag[3],
-            owner: bag[4]
+            chips: bag[1],
+            owner: bag[2]
         }
-        // let token = await Bag.methods.tokenURI(bag.bagId).call()
         setBag(bag)
     }
 
@@ -85,10 +67,8 @@ function Bag ({ account, contracts, web3, setBalance }) {
             {!buyBag &&
                 <Card style={{ maxWidth: '500px' }} title='Your Bag'>
                     <Typography>
-                        <Paragraph>Id: {bag.bagId}</Paragraph>
-                        <Paragraph>Bag Contract: {bag.bagContract}</Paragraph>
+                        <Paragraph>Id: {bag.itemId}</Paragraph>
                         <Paragraph>Chips: {bag.chips}</Paragraph>
-                        <Paragraph>Metadata: {bag.metadata}</Paragraph>
                     </Typography >
                     <label htmlFor='input' />
                     <Button onClick={buyChips}>Buy Chips</Button>
@@ -96,7 +76,7 @@ function Bag ({ account, contracts, web3, setBalance }) {
                 </Card>
             }
 
-            {buyBag && <Button onClick={mintBag}>Create a bag!</Button>}
+            {buyBag && <Button onClick={createBag}>Create a bag!</Button>}
         </>
     )
 }

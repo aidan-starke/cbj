@@ -1,10 +1,8 @@
 const House = artifacts.require('House')
-const Bag = artifacts.require('Bag')
 const CBJ = artifacts.require('CBJ')
 const { expectRevert } = require('@openzeppelin/test-helpers')
 
 let house
-let bag
 let cbj
 
 contract('House', accounts => {
@@ -14,9 +12,6 @@ contract('House', accounts => {
 
         house = await House.new(cbjAddress)
         houseAddress = house.address
-
-        bag = await Bag.new(houseAddress)
-        bagAddress = bag.address
     })
 
     describe('getBagPrice', () => {
@@ -38,17 +33,12 @@ contract('House', accounts => {
     })
 
     describe('createBag', () => {
-        beforeEach(async () => {
-            await bag.mintBag("https://www.mybaglocation.com")
-            await bag.mintBag("https://www.mybaglocation2.com")
-        })
-
         it('should create bag', async () => {
             let bagPrice = await house.getBagPrice()
 
             value = bagPrice.toString()
 
-            await house.createBag(bagAddress, 1, { value: value, gas: 1000000 })
+            await house.createBag({ value: value, gas: 1000000 })
 
             const totalSupply = await house.totalSupply()
 
@@ -60,14 +50,14 @@ contract('House', accounts => {
             value = bagPrice.toString()
 
             await expectRevert(
-                house.createBag(bagAddress, 2, { value: value, gas: 1000000 }),
+                house.createBag({ value: value, gas: 1000000 }),
                 'Only one bag per person'
             )
         })
 
         it('should not create bag if value !== price of bag', async () => {
             await expectRevert(
-                house.createBag(bagAddress, 2, { value: 0, gas: 1000000, from: accounts[1] }),
+                house.createBag({ value: 0, gas: 1000000, from: accounts[1] }),
                 'Price must equal bag purchase price'
             )
         })
@@ -76,7 +66,6 @@ contract('House', accounts => {
             let bag = await house.getBag()
 
             assert(bag.itemId === '1')
-            assert(bag.bagId === '1')
             assert(bag.chips === '0')
             assert(bag.owner === accounts[0])
         })

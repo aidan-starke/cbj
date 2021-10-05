@@ -22,23 +22,16 @@ contract House is ReentrancyGuard {
 
     struct Bag {
         uint256 itemId;
-        address bagContract;
-        uint256 bagId;
         uint256 chips;
         address payable owner;
     }
 
     mapping(address => Bag) private addressToBag;
 
-    event BagCreated(
-        uint256 indexed itemId,
-        address indexed bagContract,
-        uint256 bagId,
-        address owner
-    );
+    event BagCreated(uint256 indexed itemId, address owner);
 
-    event ChipsBought(uint256 indexed chips, uint256 bagId, address owner);
-    event ChipsCashedIn(uint256 chips, uint256 bagId, address owner);
+    event ChipsBought(uint256 indexed chips, uint256 itemId, address owner);
+    event ChipsCashedIn(uint256 chips, uint256 itemId, address owner);
 
     function getBagPrice() public view returns (uint256) {
         return bagPrice;
@@ -76,25 +69,14 @@ contract House is ReentrancyGuard {
         return addressToBag[msg.sender];
     }
 
-    function createBag(address _bagContract, uint256 _bagId)
-        public
-        payable
-        nonReentrant
-        onlyOneBag
-    {
+    function createBag() public payable nonReentrant onlyOneBag {
         require(msg.value == bagPrice, "Price must equal bag purchase price");
         _itemIds.increment();
         uint256 itemId = _itemIds.current();
 
-        addressToBag[msg.sender] = Bag(
-            itemId,
-            _bagContract,
-            _bagId,
-            0,
-            payable(msg.sender)
-        );
+        addressToBag[msg.sender] = Bag(itemId, 0, payable(msg.sender));
 
-        emit BagCreated(itemId, _bagContract, _bagId, msg.sender);
+        emit BagCreated(itemId, msg.sender);
     }
 
     function getChipBalance() external view onlyBagOwner returns (uint256) {
@@ -110,7 +92,7 @@ contract House is ReentrancyGuard {
         IERC20(cbjAddress).transferFrom(msg.sender, address(this), msg.value);
         addressToBag[msg.sender].chips += _amount;
 
-        emit ChipsBought(_amount, addressToBag[msg.sender].bagId, msg.sender);
+        emit ChipsBought(_amount, addressToBag[msg.sender].itemId, msg.sender);
     }
 
     modifier enoughChips(uint256 _amount) {
@@ -126,6 +108,10 @@ contract House is ReentrancyGuard {
         IERC20(cbjAddress).transfer(msg.sender, value);
         addressToBag[msg.sender].chips -= _amount;
 
-        emit ChipsCashedIn(_amount, addressToBag[msg.sender].bagId, msg.sender);
+        emit ChipsCashedIn(
+            _amount,
+            addressToBag[msg.sender].itemId,
+            msg.sender
+        );
     }
 }

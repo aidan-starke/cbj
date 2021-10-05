@@ -2,7 +2,6 @@ import Web3 from 'web3'
 import detectEthereumProvider from '@metamask/detect-provider'
 import CBJ from '../contracts/CBJ.json'
 import House from '../contracts/House.json'
-import Bag from '../contracts/Bag.json'
 
 function getWeb3 () {
     return new Promise(async (resolve, reject) => {
@@ -23,7 +22,6 @@ async function getContracts (web3) {
     const networkId = await web3.eth.net.getId()
     const cbjDeployedNetwork = CBJ.networks[networkId]
     const houseDeployedNetwork = House.networks[networkId]
-    const bagDeployedNetwork = Bag.networks[networkId]
 
     return Promise.all([
         new web3.eth.Contract(
@@ -33,10 +31,6 @@ async function getContracts (web3) {
         new web3.eth.Contract(
             House.abi,
             houseDeployedNetwork && houseDeployedNetwork.address
-        ),
-        new web3.eth.Contract(
-            Bag.abi,
-            bagDeployedNetwork && bagDeployedNetwork.address
         )
     ])
 }
