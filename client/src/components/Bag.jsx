@@ -71,7 +71,7 @@ function Bag ({ account, contracts, web3, setBalance }) {
     else return (
         <>
             {!buyBag &&
-                <Card style={{ maxWidth: '500px' }} title='Your Bag'>
+                <Card style={{ maxWidth: '500px', margin: '10px auto', textAlign: 'center' }} title='Your Bag'>
                     <Typography>
                         <Paragraph>Id: {bag.itemId}</Paragraph>
                         <Paragraph>Chips: {bag.chips}</Paragraph>
